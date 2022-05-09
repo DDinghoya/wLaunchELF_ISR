@@ -1767,12 +1767,12 @@ u64 getFileSize(const char *path, const FILEINFO *file)
 		static sceMcStDateTime new_mtime;                                            //manipulated struct for savefile properties, this will be used to change the date of the save file properties
 																					//char *result,*end;
 																					/*=====================================================================================================*/
-	/*
+
 	#ifdef TMANIP_MORON
-		McGetDir(slot, 0, HACK_FOLDER, 0x2, ARRAY_ENTRIES, &mcDirAAA);
+		mcGetDir(slot, 0, HACK_FOLDER, 0x2, ARRAY_ENTRIES, &mcDirAAA);
 	#else
-		McGetDir(slot, 0,  file->name, 0x2, ARRAY_ENTRIES, &mcDirAAA);
-	#endif*/ //till i find the real name of this func on ps2dev:1.0
+		mcGetDir(slot, 0,  file->name, 0x2, ARRAY_ENTRIES, &mcDirAAA);
+	#endif
 		new_mtime.Resv2 = 0;
 		new_mtime.Sec = 59;
 		new_mtime.Min = 59;
