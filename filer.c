@@ -1099,7 +1099,7 @@ int readROM0(const char *path, FILEINFO *info, int max)
 {
     iox_dirent_t dirbuf;
     char dir[MAX_PATH];
-    int i = 0, fd;
+    int i = 0, fd, x;
     strcpy(dir, path);
     if ((fd = fileXioDopen(path)) < 0)
         {
@@ -1107,12 +1107,13 @@ int readROM0(const char *path, FILEINFO *info, int max)
 			return 0;
 		}
 
-    while (fileXioDread(fd, &dirbuf) > 0) {
+    while ((x = fileXioDread(fd, &dirbuf)) > 0) {
         if (dirbuf.stat.mode & FIO_S_IFDIR &&
             (!strcmp(dirbuf.name, ".") || !strcmp(dirbuf.name, "..")))
             continue;  // Skip pseudopaths "." and ".."
 
         strcpy(info[i].name, dirbuf.name);
+		DPRINTF("%s: info[%d].name = %s\n", __func__, i, info[i].name);
         clear_mcTable(&info[i].stats);
         if (dirbuf.stat.mode & FIO_S_IFDIR) {
             info[i].stats.AttrFile = MC_ATTR_norm_folder;
@@ -1132,7 +1133,7 @@ int readROM0(const char *path, FILEINFO *info, int max)
         if (i == max)
             break;
     }
-	DPRINTF("%s: finished parsing loop\n", __func__);
+	DPRINTF("%s: finished parsing loop (%d)\n", __func__, x);
 
     fileXioDclose(fd);
 
