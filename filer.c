@@ -1102,7 +1102,10 @@ int readROM0(const char *path, FILEINFO *info, int max)
     int i = 0, fd;
     strcpy(dir, path);
     if ((fd = fileXioDopen(path)) < 0)
-        return 0;
+        {
+			DPRINTF("%s: fileXioDopen returned (%d)\n", __func__, fd);
+			return 0;
+		}
 
     while (fileXioDread(fd, &dirbuf) > 0) {
         if (dirbuf.stat.mode & FIO_S_IFDIR &&
@@ -1117,8 +1120,10 @@ int readROM0(const char *path, FILEINFO *info, int max)
             info[i].stats.AttrFile = MC_ATTR_norm_file;
             info[i].stats.FileSizeByte = dirbuf.stat.size;
             info[i].stats.Reserve2 = dirbuf.stat.hisize;
-        } else
+        } else {
+			DPRINTF("%s: skipping entry [%s]\n\tit is neither a file or folder\n", __func__, info[i].name);
             continue;  // Skip entry which is neither a file nor a folder
+		}
         memcpy((char *)info[i].stats.EntryName, info[i].name, 32);
         info[i].stats.EntryName[sizeof(info[i].stats.EntryName) - 1] = 0;
         memcpy((void *)&info[i].stats._Create, dirbuf.stat.ctime, 8);
@@ -1127,6 +1132,7 @@ int readROM0(const char *path, FILEINFO *info, int max)
         if (i == max)
             break;
     }
+	DPRINTF("%s: finished parsing loop\n", __func__);
 
     fileXioDclose(fd);
 
