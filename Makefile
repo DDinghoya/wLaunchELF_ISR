@@ -50,9 +50,9 @@ endif
 
 ifeq ($(SIO_DEBUG),1)
     EE_CFLAGS += -DSIO_DEBUG
-    EE_OBJS += sior_irx.o
+    EE_OBJS += sior_irx.o sior_rpc_mod.o
     HAS_EESIO = -SIO_DEBUG
-    EE_LIBS += -lsior
+#    EE_LIBS += -lsior
 endif
 
 ifeq ($(IOP_RESET),0)
@@ -258,7 +258,7 @@ loader_elf.s: loader/loader.elf
 ps2kbd_irx.s: $(PS2SDK)/iop/irx/ps2kbd.irx
 	bin2s $< $@ ps2kbd_irx
 
-sior_irx.s: $(PS2SDK)/iop/irx/sior.irx
+sior_irx.s: iop/sior.irx
 	bin2s $< $@ sior_irx
 
 AllowDVDV/AllowDVDV.irx: AllowDVDV
