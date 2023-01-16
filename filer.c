@@ -1101,7 +1101,7 @@ int readROM0(const char *path, FILEINFO *info, int max)
     char dir[MAX_PATH];
     int i = 0, fd, x;
     strcpy(dir, path);
-    if ((fd = fileXioDopen(path)) < 0)
+    if ((fd = fileXioDopen("rom0:")) < 0)
         {
 			DPRINTF("%s: fileXioDopen returned (%d)\n", __func__, fd);
 			return 0;
