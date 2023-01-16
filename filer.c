@@ -1095,6 +1095,49 @@ int readVMC(const char *path, FILEINFO *info, int max)
 //------------------------------
 //endfunc readVMC
 //--------------------------------------------------------------
+int readROM0(const char *path, FILEINFO *info, int max)
+{
+    iox_dirent_t dirbuf;
+    char dir[MAX_PATH];
+    int i = 0, fd;
+    strcpy(dir, path);
+    if ((fd = fileXioDopen(path)) < 0)
+        return 0;
+
+    while (fileXioDread(fd, &dirbuf) > 0) {
+        if (dirbuf.stat.mode & FIO_S_IFDIR &&
+            (!strcmp(dirbuf.name, ".") || !strcmp(dirbuf.name, "..")))
+            continue;  // Skip pseudopaths "." and ".."
+
+        strcpy(info[i].name, dirbuf.name);
+        clear_mcTable(&info[i].stats);
+        if (dirbuf.stat.mode & FIO_S_IFDIR) {
+            info[i].stats.AttrFile = MC_ATTR_norm_folder;
+        } else if (dirbuf.stat.mode & FIO_S_IFREG) {
+            info[i].stats.AttrFile = MC_ATTR_norm_file;
+            info[i].stats.FileSizeByte = dirbuf.stat.size;
+            info[i].stats.Reserve2 = dirbuf.stat.hisize;
+        } else
+            continue;  // Skip entry which is neither a file nor a folder
+        memcpy((char *)info[i].stats.EntryName, info[i].name, 32);
+        info[i].stats.EntryName[sizeof(info[i].stats.EntryName) - 1] = 0;
+        memcpy((void *)&info[i].stats._Create, dirbuf.stat.ctime, 8);
+        memcpy((void *)&info[i].stats._Modify, dirbuf.stat.mtime, 8);
+        i++;
+        if (i == max)
+            break;
+    }
+
+    fileXioDclose(fd);
+
+    size_valid = 1;
+    time_valid = 1;
+
+    return i;
+}
+//------------------------------
+//endfunc readROM0
+//--------------------------------------------------------------
 int readHDD(const char *path, FILEINFO *info, int max)
 {
 	iox_dirent_t dirbuf;
@@ -1442,6 +1485,8 @@ int getDir(const char *path, FILEINFO *info)
 		n = readMC(path, info, max);
 	else if (!strncmp(path, "hdd", 3))
 		n = readHDD(path, info, max);
+	else if (!strncmp(path, "rom0", 4))
+		n = readROM0(path, info, max);
 #ifdef DVRP
 	else if (!strncmp(path, "dvr_hdd", 7))
 		n = readHDDDVRP(path, info, max);
@@ -1609,7 +1654,7 @@ int menu(const char *path, FILEINFO *file)
 	memset(enable, TRUE, NUM_MENU);  //Assume that all menu items are legal by default
 
 	//identify cases where write access is illegal, and disable menu items accordingly
-	if ((!strncmp(path, "cdfs", 4))                           //Writing is always illegal for CDVD drive
+	if ((!strncmp(path, "cdfs", 4)) || (!strncmp(path, "rom0", 4))                          //Writing is always illegal for CDVD drive & rom0:
 #ifdef ETH
 	    || ((!strncmp(path, "host", 4))                       //host: has special cases
 	        && ((!setting->HOSTwrite)                         //host: Writing is illegal if not enabled in CNF
@@ -1628,7 +1673,7 @@ int menu(const char *path, FILEINFO *file)
 		enable[MOUNTVMC1] = FALSE;
 		enable[GETSIZE] = FALSE;
 	}
-//#ifdef TMANIP
+
 	if (                                                        //if
 	    (file->stats.AttrFile & sceMcFileAttrSubdir) &&         //pointing to a folder
 	    (strcmp(file->name, "..")) &&                           //it isnt the ".." option
@@ -1639,7 +1684,7 @@ int menu(const char *path, FILEINFO *file)
 		enable[TIMEMANIP] = FALSE;
 	} 
 //#endif //TMANIP
-	if ( (genCmpFileExt(file->name, "ELF")) && ( (!strncmp(path, "mass", 4)) || (!strncmp(path, "hdd0:/", 6) && !menu_disabled) ) )
+	if ( (genCmpFileExt(file->name, "ELF")) && (!strncmp(path, "mass", 4)) )
 	{
 		enable[TITLE_CFG] = TRUE;
 	} else {enable[TITLE_CFG] = FALSE;}
@@ -1669,7 +1714,7 @@ int menu(const char *path, FILEINFO *file)
 		enable[RENAME] = FALSE;
 	}
 
-	if ((file->stats.AttrFile & sceMcFileAttrSubdir) || !strncmp(path, "vmc", 3) || !strncmp(path, "mc", 2)) {
+	if ((file->stats.AttrFile & sceMcFileAttrSubdir) || !strncmp(path, "vmc", 3) || !strncmp(path, "mc", 2) || !strncmp(path, "rom0", 4)) {
 		enable[MOUNTVMC0] = FALSE;  //forbid insane VMC mounting
 		enable[MOUNTVMC1] = FALSE;  //forbid insane VMC mounting
 	}
@@ -3403,6 +3448,8 @@ int setFileList(const char *path, const char *ext, FILEINFO *files, int cnfmode)
 		strcpy(files[nfiles].name, "mc1:");
 		files[nfiles++].stats.AttrFile = sceMcFileAttrSubdir;
 		strcpy(files[nfiles].name, "hdd0:");
+		files[nfiles++].stats.AttrFile = sceMcFileAttrSubdir;
+		strcpy(files[nfiles].name, "rom0:");
 		files[nfiles++].stats.AttrFile = sceMcFileAttrSubdir;
 #ifdef DVRP
 		strcpy(files[nfiles].name, "dvr_hdd0:");
