@@ -1230,7 +1230,6 @@ int readXFROM(const char *path, FILEINFO *info, int max)
 	iox_dirent_t dirbuf;
 	char dir[MAX_PATH];
 	int i = 0, fd;
-	volatile int j;
 
 	loadFlashModules();
 
@@ -1239,21 +1238,22 @@ int readXFROM(const char *path, FILEINFO *info, int max)
 		return 0;
 
 	while (fileXioDread(fd, &dirbuf) > 0) {
-		if (dirbuf.stat.mode & FIO_S_IFDIR &&
-		    (!strcmp(dirbuf.name, ".") || !strcmp(dirbuf.name, "..")))
-			continue;  //Skip pseudopaths "." and ".."
+        if (dirbuf.stat.mode & FIO_S_IFDIR &&
+			(!strcmp(dirbuf.name, ".") || !strcmp(dirbuf.name, "..")))
+			continue;  // Skip pseudopaths "." and ".."
 
 		strcpy(info[i].name, dirbuf.name);
 		clear_mcTable(&info[i].stats);
 		if (dirbuf.stat.mode & FIO_S_IFDIR) {
-			info[i].stats.AttrFile = MC_ATTR_norm_folder;
+		    info[i].stats.AttrFile = MC_ATTR_norm_folder;
 		} else if (dirbuf.stat.mode & FIO_S_IFREG) {
 			info[i].stats.AttrFile = MC_ATTR_norm_file;
 			info[i].stats.FileSizeByte = dirbuf.stat.size;
 			info[i].stats.Reserve2 = dirbuf.stat.hisize;
 		} else
-			continue;  //Skip entry which is neither a file nor a folder
-		strncpy((char *)info[i].stats.EntryName, info[i].name, 32);
+			continue;  // Skip entry which is neither a file nor a folder
+		memcpy((char *)info[i].stats.EntryName, info[i].name, 32);
+		info[i].stats.EntryName[sizeof(info[i].stats.EntryName) - 1] = 0;
 		memcpy((void *)&info[i].stats._Create, dirbuf.stat.ctime, 8);
 		memcpy((void *)&info[i].stats._Modify, dirbuf.stat.mtime, 8);
 		i++;

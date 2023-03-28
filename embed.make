@@ -23,6 +23,12 @@ $(EE_ASM_DIR)sio2man.s: $(SIO2MAN_SOURCE) | $(EE_ASM_DIR)
 	
 $(EE_ASM_DIR)mx4sio_bd.s: iop/mx4sio_bd.irx | $(EE_ASM_DIR)
 	$(BIN2S) $< $@ mx4sio_bd_irx
+#---{ XFROM }---#
+$(EE_ASM_DIR)extflash_irx.s: iop/extflash.irx | $(EE_ASM_DIR)
+	$(BIN2S) $< $@ extflash_irx
+
+$(EE_ASM_DIR)xfromman_irx.s: iop/xfromman.irx | $(EE_ASM_DIR)
+	$(BIN2S) $< $@ xfromman_irx
 #---{ USB }---#
 
 $(EE_ASM_DIR)usbd_irx.s: $(PS2SDK)/iop/irx/usbd.irx | $(EE_ASM_DIR)

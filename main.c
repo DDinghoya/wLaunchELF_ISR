@@ -41,6 +41,11 @@ IMPORT_BIN2C(padman_irx);
 IMPORT_BIN2C(sior_irx);
 #endif
 
+#ifdef XFROM
+IMPORT_BIN2C(extflash_irx);
+IMPORT_BIN2C(xfromman_irx);
+#endif
+
 IMPORT_BIN2C(usbd_irx);
 #ifdef EXFAT
 IMPORT_BIN2C(bdm_irx);
@@ -880,8 +885,11 @@ static void load_ps2atad(void)
 #ifdef XFROM
 static void load_pflash(void)
 {
-	SifLoadModule("rom0:PFLASH", 0, NULL);
-	SifLoadModule("rom0:PXFROMMAN", 0, NULL);
+	int ID, RET;
+	ID = SifExecModuleBuffer(extflash_irx, size_extflash_irx, 0, NULL, &RET);
+	DPRINTF(" [EXTFLASH]: ID=%d, ret=%d\n", ID, RET);
+	ID = SifExecModuleBuffer(xfromman_irx, size_xfromman_irx, 0, NULL, &RET);
+	DPRINTF(" [XFROMMAN]: ID=%d, ret=%d\n", ID, RET);
 }
 //------------------------------
 //endfunc load_pflash
@@ -1510,6 +1518,7 @@ void loadFlashModules(void)
 	if (!have_Flash_modules) {
 		if (!is_early_init)  //Do not draw any text before the UI is initialized.
 			drawMsg(LNG(Loading_Flash_Modules));
+		load_ps2dev9();
 		setupPowerOff();
 		load_pflash();
 		have_Flash_modules = TRUE;
